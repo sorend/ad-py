@@ -8,12 +8,10 @@ before_install:
 - curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.17.3/bin/linux/amd64/kubectl
   && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 script:
-- make build
+- .travis/build.sh
 deploy:
   provider: script
-  script:
-  - make release
-  - KUBECONFIG=./kubeconfig make deploy
+  script: .travis/deploy.sh
   on:
     branch: master
 env:
