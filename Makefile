@@ -14,7 +14,7 @@ deploy:
 	kubectl apply -f k8s-versioned.yml
 
 release:
-	docker login --username $(HUB_USERNAME) --password $(HUB_SECRET) $(REGISTRY)
+	echo $(HUB_SECRET) | docker login --username $(HUB_USERNAME) --password-stdin $(REGISTRY)
 	docker push $(IMAGE_NAME)
 
 build:
