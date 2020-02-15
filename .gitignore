@@ -2,5 +2,6 @@
 *~
 venv
 adpy.tar.gz
-.travis/kubeconfig
+kubeconfig
+adpy-secret.yml
 k8s-versioned.yml

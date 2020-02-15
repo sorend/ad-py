@@ -21,6 +21,27 @@ spec:
         image: repo.treescale.com/sorend/adpy:VERSION
         ports:
         - containerPort: 8080
+        env:
+        - name: FLICKR_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: adpy-secret
+              key: FLICKR_API_KEY
+        - name: FLICKR_USERID
+          valueFrom:
+            secretKeyRef:
+              name: adpy-secret
+              key: FLICKR_USERID
+        - name: YOUTUBE_CHANNEL
+          valueFrom:
+            secretKeyRef:
+              name: adpy-secret
+              key: YOUTUBE_CHANNEL
+        - name: YOUTUBE_DEVELOPER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: adpy-secret
+              key: YOUTUBE_DEVELOPER_KEY
         volumeMounts:
           - name: data-volume
             mountPath: /data
