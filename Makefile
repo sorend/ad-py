@@ -9,8 +9,9 @@ dev:
 	docker run --rm -it -p 8080:8080 $(IMAGE_NAME)
 
 deploy:
-	# setup kubeconfig
-	kubectl apply -f k8s.yml
+	sed -e "s/VERSION/$(VER)/g" k8s.yml > k8s-versioned.yml
+	cat k8s-versioned.yml
+	kubectl apply -f k8s-versioned.yml
 
 release:
 	docker login --username $(HUB_USERNAME) --password $(HUB_SECRET) $(REGISTRY)
