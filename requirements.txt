@@ -1,0 +1,9 @@
+APScheduler
+google-api-python-client
+bottle
+feedparser
+python-dateutil
+simplejson
+six
+waitress
+py-healthcheck
