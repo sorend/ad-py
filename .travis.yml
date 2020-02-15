@@ -11,6 +11,7 @@ script:
 - .travis/build.sh
 deploy:
   provider: script
+  skip_cleanup: true
   script: .travis/deploy.sh
   on:
     all_branches: true
