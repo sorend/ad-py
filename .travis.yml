@@ -13,7 +13,7 @@ deploy:
   provider: script
   script: .travis/deploy.sh
   on:
-    branch: master
+    all_branches: true
 env:
   global:
     secure: V2aS0sLgXhw9up4c5QQvPxE/KBD6NU/5hZw/nhQHLU6Cv/E+/whIhk9Swi61gZpY0SqU5RiEkLKkjLytrKvX2wTCKPLl6KrxWBxtB+ALGJGyBVBuJ89velz3CeZzkIozrV8EE0zAiGig+M4WUXfrTMRmnBO9pHdAzDvbgVT17D8jiScYIMkEJ2iSdBM89FwhT/AGZtAwMYumlcFv6d7PiNA63ECDlzp7c16IWgHWCNIHt7ZlqLbLbPfY16uOhSuJOJ0/u6GPrI/+U5YC7PhEWxkZzQ60Tj4ZjFs1EtEzApqb5tnHBlknmhd5RFGf8rc6OrOEQJebulzxoawO4F9liiifb+2jYjN67kyxq61j6NEqeobfaBKARkCvhQ5YmaS3OPh273D5eCFnj5+IyyRQUQYDo9mOGWf6e9IinV52dl/+08PO2HTwM9ECO03N5TdP3wftv8NWnuHf5FuPrt1TY1x8FksyVC0WU3IM9ge2wPSxCGAtOWV27hqAxlpyKyky+hZIbFJ/cZ4lJAtn2I0FE1QdtzlcopjSViGLXd+H9Xgi7mj7zwbtQSG+Rvof3X1orUFXpSmMbVKF+xwQYkb83t0QIQF4T22L31xaW8u8ewHi04MO7nNQ3TmijsCPfWgGTDB2F3HWUFO941GGLAEFK+A+62yKqwL1fF3qT3PXq8c=
