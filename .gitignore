@@ -5,3 +5,4 @@ adpy.tar.gz
 kubeconfig
 adpy-secret.yml
 k8s-versioned.yml
+secret.tar
