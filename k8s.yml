@@ -21,6 +21,10 @@ spec:
         image: repo.treescale.com/sorend/adpy:VERSION
         ports:
         - containerPort: 8080
+        resources:
+          limits:
+            cpu: "50m"
+            memory: "100Mi"
         env:
         - name: FLICKR_API_KEY
           valueFrom:
