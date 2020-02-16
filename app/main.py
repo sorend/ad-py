@@ -12,11 +12,10 @@ from bottle import request, response
 
 app = application = bottle.Bottle()
 
-# health and env checks app, "/healthcheck.x" app, "/environment.x"
 health = HealthCheck()
 envdump = EnvironmentDump()
 
-@app.route("/healthcheck.x")
+@app.route("/healthz")
 def healthcheck():
     message, status, headers = health.run()
     return bottle.HTTPResponse(body=message, status=status, headers=headers)
