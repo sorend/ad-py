@@ -17,7 +17,5 @@ WORKDIR /app
 
 USER www-data
 
-HEALTHCHECK CMD curl -f http://localhost:8080/healthcheck.x || false
-
 ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["python3", "/app/main.py"]
