@@ -25,7 +25,10 @@ jobs:
       with:
         images: |
           ghcr.io/sorend/ad-py
-        tag-sha: true
+        tags: |
+          type=ref
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v1
     - name: Setup docker buildx
       uses: docker/setup-buildx-action@v1
     - name: Login to ghcr
