@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Update routines."""
 
 from datasources import loaders
 import json
@@ -6,14 +7,16 @@ import os
 
 from main import FEED_FILE
 
+
 def update_feed():
+    """Update the feed cache."""
     feed = {}
     if os.path.exists(FEED_FILE):
         with open(FEED_FILE, "r") as fd:
             feed = json.load(fd)
 
     old = len(feed)
-    
+
     for loader in loaders:
         current = loader()
         for item in current:
