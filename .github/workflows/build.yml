@@ -12,6 +12,10 @@ on:
     branches:
       - 'master'
 
+concurrency:
+  group: ${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   build_and_publish:
     name: Build and publish
@@ -40,7 +44,7 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GHCR_TOKEN }}
-      if: secrets.GHCR_TOKEN != ''
+      if: ${{ secrets.GHCR_TOKEN != '' }}
     - name: Build and push
       id: docker_build
       uses: docker/build-push-action@v2.7.0
