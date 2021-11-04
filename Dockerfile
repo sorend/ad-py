@@ -8,7 +8,6 @@ ADD requirements.txt /requirements.txt
 
 RUN apk add --no-cache ca-certificates tini git curl && \
 	pip3 install -r /requirements.txt && \
-	addgroup -g 1000 www-data && \
 	adduser -D -u 1000 -G www-data www-data && \
 	mkdir /data && chown www-data /data && \
 	rm -rf /root/.cache
