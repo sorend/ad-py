@@ -1,6 +1,7 @@
 # FROM python:3.6.4-alpine3.7
 # FROM python:3.8.3-alpine3.11
-FROM python:3.9.7-alpine3.14
+# FROM python:3.9.7-alpine3.14
+FROM python:3.12-alpine3.18
 
 MAINTAINER Soren A D <sorend@gmail.com>
 

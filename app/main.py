@@ -35,7 +35,7 @@ FEED_FILE = "/data/feed.json"
 print("- Using feed file", FEED_FILE)
 
 
-def jsonp(request, response, dictionary):
+def jsonp_response(request, response, dictionary):
     """Produce jsonp response."""
     if (request.query.callback):
         response.content_type = "application/javascript"
@@ -67,7 +67,7 @@ def feed():
     for x in sfeed:
         x["type"] = "picture" if x["id"].startswith("flickr-") else "video"
 
-    return jsonp(request, response, {"data": sfeed, "success": True})
+    return jsonp_response(request, response, {"data": sfeed, "success": True})
 
 
 def _start_scheduler():
