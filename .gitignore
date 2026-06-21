@@ -1,6 +1,11 @@
 *.pyc
 *~
-venv
+venv/
+.venv/
+__pycache__/
+*.egg-info/
+dist/
+.uv/
 adpy.tar.gz
 kubeconfig
 adpy-secret.yml

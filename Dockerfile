@@ -1,23 +1,21 @@
-# FROM python:3.6.4-alpine3.7
-# FROM python:3.8.3-alpine3.11
-# FROM python:3.9.7-alpine3.14
-FROM python:3.12-alpine3.18
+FROM python:3.12-alpine3.21
 
-MAINTAINER Soren A D <sorend@gmail.com>
-
-ADD requirements.txt /requirements.txt
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 RUN apk add --no-cache ca-certificates tini git curl && \
-	pip3 install -r /requirements.txt && \
-	adduser -D -u 1000 -G www-data www-data && \
-	mkdir /data && chown www-data /data && \
-	rm -rf /root/.cache
+    adduser -D -u 1000 -G www-data www-data && \
+    mkdir /data && chown www-data /data
 
-ADD ./app /app
+COPY pyproject.toml uv.lock /app/
 
 WORKDIR /app
+
+RUN uv sync --no-dev --no-install-project && \
+    rm -rf /root/.cache
+
+COPY ./app /app
 
 USER www-data
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["python3", "/app/main.py"]
+CMD ["uv", "run", "--no-dev", "python", "/app/main.py"]
