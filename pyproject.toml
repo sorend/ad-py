@@ -11,6 +11,7 @@ dependencies = [
     "APScheduler>=3.10",
     "google-api-python-client>=2.0",
     "bottle>=0.12",
+    "jinja2>=3.1",
     "python-dateutil>=2.9",
     "waitress>=3.0",
     "py-healthcheck>=1.10",

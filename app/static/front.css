@@ -1,0 +1,82 @@
+body {
+	margin: 0;
+	padding: 0;
+	font-family: Palatino, Georgia, Baskerville;
+        position: relative;
+}
+h1 {
+	text-align: center;
+}
+#heading {
+	height: 350px;
+	border-bottom: 1px #000 solid;
+	padding: 0;
+	margin: 0;
+	background: #fff url("header_frontpage.jpg") no-repeat scroll center bottom;
+}
+#family {
+	text-align: center;
+	margin: 0;
+	padding: 0;
+}
+#family img {
+	margin: 0;
+	padding: 0;
+	border: 0;
+        max-width: 6.66%;
+}
+#links {
+	text-align: center;
+	margin: 10px 0 0 0;
+}
+.fi {
+    position: relative;
+    width: 25%;
+    float: left;
+    height: 250px;
+    overflow: hidden;
+}
+.video, .picture {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+}
+.video {
+    background-size: auto 360px;
+    background-position: -100px -50px;
+}
+.fi h3 span {
+    position: absolute;
+    top: 175px;
+    height: 75px;
+    left: 0;
+    width: 100%;
+    background: rgb(0, 0, 0);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 6px;
+    color: white;
+}
+.fi h3 span:hover {
+    background-color: #ffd700;
+}
+#overlay {
+    z-index: 5;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+}
+#overlay .content {
+    width: 100%;
+    padding: 10px;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    color: white;
+    background: rgb(255, 215, 0);
+    background: rgba(255, 215, 0, 0.7);
+    text-align: center;
+}
+#overlay .content a, #overlay .content a:hover, #overlay .content a:visited {
+    color: white;
+}
