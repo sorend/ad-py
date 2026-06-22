@@ -71,7 +71,7 @@ class TestIndexRoute:
     def test_index_contains_htmx_script(self):
         """GET / page loads htmx from CDN."""
         _, body = call_route(main.app, "/")
-        assert "htmx.org" in body
+        assert "https://unpkg.com/htmx.org@" in body
 
     def test_index_has_feed_hx_get(self):
         """GET / page has an element that triggers htmx load for /feed.html."""
