@@ -33,19 +33,45 @@ class TestLoadFlickr:
         }
     }
 
+    # getPhotos response for album 1: 3 photos with known datetaken
+    # Sorted: "2021-01-15 ...", "2021-01-20 ...", "2021-01-25 ..."  → median = middle = "2021-01-20 12:00:00"
+    PHOTOS_RESPONSE_1 = {
+        "photoset": {
+            "id": "72157699000000001",
+            "photo": [
+                {"id": "p1", "datetaken": "2021-01-15 10:00:00", "datetakenunknown": "0"},
+                {"id": "p2", "datetaken": "2021-01-20 12:00:00", "datetakenunknown": "0"},
+                {"id": "p3", "datetaken": "2021-01-25 14:00:00", "datetakenunknown": "0"},
+            ],
+            "page": 1,
+            "pages": 1,
+            "total": 3,
+        }
+    }
+
+    # getPhotos response for album 2: 1 photo
+    PHOTOS_RESPONSE_2 = {
+        "photoset": {
+            "id": "72157699000000002",
+            "photo": [
+                {"id": "p4", "datetaken": "2021-02-10 10:00:00", "datetakenunknown": "0"},
+            ],
+            "page": 1,
+            "pages": 1,
+            "total": 1,
+        }
+    }
+
+    def _json_side_effects(self):
+        """Return side_effect list for json.load: getList + getPhotos per album."""
+        return [self.PHOTOSETS_RESPONSE, self.PHOTOS_RESPONSE_1, self.PHOTOS_RESPONSE_2]
+
     def test_load_flickr_returns_list(self):
         """load_flickr returns a list of dicts."""
         from datasources import load_flickr
 
-        response_bytes = json.dumps(self.PHOTOSETS_RESPONSE).encode()
-        with mock.patch("urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.return_value.__enter__ = mock.Mock(
-                return_value=mock_urlopen.return_value
-            )
-            mock_urlopen.return_value.__exit__ = mock.Mock(return_value=False)
-            mock_urlopen.return_value.read.return_value = response_bytes
-            # json.load uses the file-like object; patch it to return our data
-            with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
+            with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
         assert isinstance(result, list)
@@ -55,18 +81,18 @@ class TestLoadFlickr:
         """Each Flickr item has required keys with correct format."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
         item = result[0]
-        assert set(item.keys()) == {"id", "title", "link", "updated", "thumb"}
+        assert set(item.keys()) == {"id", "title", "link", "updated", "thumb", "median_taken_date"}
 
     def test_load_flickr_id_prefix(self):
         """Flickr items have id prefixed with 'flickr-'."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
@@ -77,7 +103,7 @@ class TestLoadFlickr:
         """Flickr items have correct Flickr album link."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
@@ -88,7 +114,7 @@ class TestLoadFlickr:
         """Flickr items have correct thumbnail URL."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
@@ -98,7 +124,7 @@ class TestLoadFlickr:
         """Flickr items have correct title from API response."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
@@ -110,7 +136,7 @@ class TestLoadFlickr:
         from datasources import load_flickr
         import datetime
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen"):
                 result = load_flickr()
 
@@ -120,15 +146,195 @@ class TestLoadFlickr:
         # Parse it back - should not raise
         datetime.datetime.fromisoformat(updated)
 
-    def test_load_flickr_calls_correct_method(self):
+    def test_load_flickr_calls_getlist_method(self):
         """load_flickr calls the photosets.getList API method."""
         from datasources import load_flickr
 
-        with mock.patch("json.load", return_value=self.PHOTOSETS_RESPONSE):
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
             with mock.patch("urllib.request.urlopen") as mock_urlopen:
                 load_flickr()
-                call_url = mock_urlopen.call_args[0][0]
-                assert "flickr.photosets.getList" in call_url
+                # getList is the first call
+                first_url = mock_urlopen.call_args_list[0][0][0]
+                assert "flickr.photosets.getList" in first_url
+
+    def test_load_flickr_calls_getphotos_for_each_album(self):
+        """load_flickr calls photosets.getPhotos once per album."""
+        from datasources import load_flickr
+
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
+            with mock.patch("urllib.request.urlopen") as mock_urlopen:
+                load_flickr()
+
+        all_urls = [c[0][0] for c in mock_urlopen.call_args_list]
+        getphotos_calls = [u for u in all_urls if "flickr.photosets.getPhotos" in u]
+        assert len(getphotos_calls) == 2  # one per album
+
+    def test_load_flickr_getphotos_requests_datetaken(self):
+        """getPhotos calls include datetaken in the extras parameter."""
+        from datasources import load_flickr
+
+        with mock.patch("json.load", side_effect=self._json_side_effects()):
+            with mock.patch("urllib.request.urlopen") as mock_urlopen:
+                load_flickr()
+
+        all_urls = [c[0][0] for c in mock_urlopen.call_args_list]
+        getphotos_urls = [u for u in all_urls if "flickr.photosets.getPhotos" in u]
+        for url in getphotos_urls:
+            assert "datetaken" in url
+
+
+class TestLoadFlickrMedianTakenDate:
+    """Tests for the median_taken_date field computed by load_flickr()."""
+
+    PHOTOSETS_RESPONSE = {
+        "photosets": {
+            "photoset": [
+                {
+                    "id": "72157699000000001",
+                    "primary": "42000000001",
+                    "farm": "5",
+                    "server": "4900",
+                    "secret": "abcdef1234",
+                    "date_update": "1609459200",
+                    "title": {"_content": "My Photo Album"},
+                }
+            ]
+        }
+    }
+
+    def _make_photos_response(self, photos, page=1, pages=1):
+        return {
+            "photoset": {
+                "id": "72157699000000001",
+                "photo": photos,
+                "page": page,
+                "pages": pages,
+                "total": len(photos),
+            }
+        }
+
+    def test_median_taken_date_present_in_item(self):
+        """Each Flickr item has a 'median_taken_date' key."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([
+            {"id": "p1", "datetaken": "2021-06-10 10:00:00", "datetakenunknown": "0"},
+        ])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        assert "median_taken_date" in result[0]
+
+    def test_median_of_odd_count_returns_middle(self):
+        """Median of an odd number of dates is the middle element."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([
+            {"id": "p1", "datetaken": "2021-01-10 00:00:00", "datetakenunknown": "0"},
+            {"id": "p2", "datetaken": "2021-01-20 12:00:00", "datetakenunknown": "0"},
+            {"id": "p3", "datetaken": "2021-01-30 00:00:00", "datetakenunknown": "0"},
+        ])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        assert result[0]["median_taken_date"] == "2021-01-20 12:00:00"
+
+    def test_median_of_even_count_returns_average(self):
+        """Median of an even number of dates is the midpoint of the two middle elements."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([
+            {"id": "p1", "datetaken": "2021-01-10 00:00:00", "datetakenunknown": "0"},
+            {"id": "p2", "datetaken": "2021-01-20 00:00:00", "datetakenunknown": "0"},
+        ])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        # Midpoint between 2021-01-10 and 2021-01-20 is 2021-01-15 00:00:00
+        assert result[0]["median_taken_date"] == "2021-01-15 00:00:00"
+
+    def test_median_none_when_no_photos(self):
+        """median_taken_date is None when the album has no photos."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        assert result[0]["median_taken_date"] is None
+
+    def test_median_ignores_unknown_dates(self):
+        """Photos with datetakenunknown='1' are excluded from the median."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([
+            {"id": "p1", "datetaken": "2021-01-10 00:00:00", "datetakenunknown": "1"},
+            {"id": "p2", "datetaken": "2021-06-15 12:00:00", "datetakenunknown": "0"},
+            {"id": "p3", "datetaken": "2021-12-31 00:00:00", "datetakenunknown": "1"},
+        ])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        # Only p2 has a known date
+        assert result[0]["median_taken_date"] == "2021-06-15 12:00:00"
+
+    def test_median_none_when_all_dates_unknown(self):
+        """median_taken_date is None when all photos have datetakenunknown='1'."""
+        from datasources import load_flickr
+
+        photos_resp = self._make_photos_response([
+            {"id": "p1", "datetaken": "2021-01-10 00:00:00", "datetakenunknown": "1"},
+            {"id": "p2", "datetaken": "2021-06-15 12:00:00", "datetakenunknown": "1"},
+        ])
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, photos_resp]):
+            with mock.patch("urllib.request.urlopen"):
+                result = load_flickr()
+
+        assert result[0]["median_taken_date"] is None
+
+    def test_median_handles_pagination(self):
+        """get_median_taken_date fetches all pages when pages > 1."""
+        from datasources import load_flickr
+
+        page1 = {
+            "photoset": {
+                "id": "72157699000000001",
+                "photo": [
+                    {"id": "p1", "datetaken": "2021-01-10 00:00:00", "datetakenunknown": "0"},
+                    {"id": "p2", "datetaken": "2021-06-01 00:00:00", "datetakenunknown": "0"},
+                ],
+                "page": 1,
+                "pages": 2,
+                "total": 3,
+            }
+        }
+        page2 = {
+            "photoset": {
+                "id": "72157699000000001",
+                "photo": [
+                    {"id": "p3", "datetaken": "2021-12-25 00:00:00", "datetakenunknown": "0"},
+                ],
+                "page": 2,
+                "pages": 2,
+                "total": 3,
+            }
+        }
+        with mock.patch("json.load", side_effect=[self.PHOTOSETS_RESPONSE, page1, page2]):
+            with mock.patch("urllib.request.urlopen") as mock_urlopen:
+                result = load_flickr()
+
+        # All 3 dates collected; median is middle = "2021-06-01 00:00:00"
+        assert result[0]["median_taken_date"] == "2021-06-01 00:00:00"
+
+        # Should have made 3 urlopen calls: 1 getList + 2 getPhotos pages
+        all_urls = [c[0][0] for c in mock_urlopen.call_args_list]
+        getphotos_calls = [u for u in all_urls if "flickr.photosets.getPhotos" in u]
+        assert len(getphotos_calls) == 2
 
 
 class TestLoadYoutube:
@@ -201,7 +407,7 @@ class TestLoadYoutube:
         assert len(result) == 2
 
     def test_load_youtube_item_structure(self):
-        """Each YouTube item has required keys."""
+        """Each YouTube item has required keys (no median_taken_date)."""
         from datasources import load_youtube
 
         mock_yt = self._make_mock_youtube()

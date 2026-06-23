@@ -13,6 +13,7 @@ SAMPLE_FLICKR_ITEMS = [
         "link": "https://www.flickr.com/photos/sorend/sets/72157699000000001/",
         "updated": "2021-01-01 00:00:00",
         "thumb": "https://farm5.static.flickr.com/4900/42000000001_abcdef1234_m.jpg",
+        "median_taken_date": "2021-01-15 12:00:00",
     },
     {
         "id": "flickr-72157699000000002",
@@ -20,6 +21,7 @@ SAMPLE_FLICKR_ITEMS = [
         "link": "https://www.flickr.com/photos/sorend/sets/72157699000000002/",
         "updated": "2021-02-01 00:00:00",
         "thumb": "https://farm6.static.flickr.com/5000/42000000002_fedcba5678_m.jpg",
+        "median_taken_date": None,
     },
 ]
 
@@ -227,3 +229,117 @@ class TestUpdateFeed:
         parsed = json.loads(raw)
         re_serialized = json.dumps(parsed, indent=2, sort_keys=True)
         assert raw == re_serialized
+
+    def test_update_feed_title_date_extracted_before_sanitization(self, tmp_path):
+        """title_date is extracted from the raw title before dots are replaced."""
+        flickr_items = [
+            {
+                "id": "flickr-111",
+                "title": "2023.05.15 Summer holiday",
+                "link": "https://flickr.com/1",
+                "updated": "2023-05-15 00:00:00",
+                "thumb": "https://flickr.com/thumb1.jpg",
+                "median_taken_date": None,
+            }
+        ]
+        feed_file = str(tmp_path / "feed.json")
+
+        with mock.patch("update.FEED_FILE", feed_file):
+            with self._patch_loaders(flickr_items=flickr_items, youtube_items=[]):
+                from update import update_feed
+                update_feed()
+
+        with open(feed_file) as f:
+            data = json.load(f)
+
+        item = data["flickr-111"]
+        # title_date extracted from original "2023.05.15 ..." → "2023-05"
+        assert item["title_date"] == "2023-05"
+        # title sanitized AFTER extraction: dots → spaces
+        assert item["title"] == "2023 05 15 Summer holiday"
+
+    def test_update_feed_title_date_none_when_no_date_in_title(self, tmp_path):
+        """title_date is None when the title contains no recognisable date."""
+        flickr_items = [
+            {
+                "id": "flickr-222",
+                "title": "My Plain Album",
+                "link": "https://flickr.com/2",
+                "updated": "2021-01-01 00:00:00",
+                "thumb": "https://flickr.com/thumb2.jpg",
+                "median_taken_date": None,
+            }
+        ]
+        feed_file = str(tmp_path / "feed.json")
+
+        with mock.patch("update.FEED_FILE", feed_file):
+            with self._patch_loaders(flickr_items=flickr_items, youtube_items=[]):
+                from update import update_feed
+                update_feed()
+
+        with open(feed_file) as f:
+            data = json.load(f)
+
+        assert data["flickr-222"]["title_date"] is None
+
+    def test_update_feed_title_date_with_danish_month(self, tmp_path):
+        """title_date is extracted correctly for titles with Danish month names."""
+        flickr_items = [
+            {
+                "id": "flickr-333",
+                "title": "2022 Juni ferie",
+                "link": "https://flickr.com/3",
+                "updated": "2022-06-01 00:00:00",
+                "thumb": "https://flickr.com/thumb3.jpg",
+                "median_taken_date": None,
+            }
+        ]
+        feed_file = str(tmp_path / "feed.json")
+
+        with mock.patch("update.FEED_FILE", feed_file):
+            with self._patch_loaders(flickr_items=flickr_items, youtube_items=[]):
+                from update import update_feed
+                update_feed()
+
+        with open(feed_file) as f:
+            data = json.load(f)
+
+        assert data["flickr-333"]["title_date"] == "2022-06"
+
+    def test_update_feed_title_date_stored_in_feed_file(self, tmp_path):
+        """title_date is present in every item written to the feed file."""
+        feed_file = str(tmp_path / "feed.json")
+
+        with mock.patch("update.FEED_FILE", feed_file):
+            with self._patch_loaders():
+                from update import update_feed
+                update_feed()
+
+        with open(feed_file) as f:
+            data = json.load(f)
+
+        for item in data.values():
+            assert "title_date" in item
+
+    def test_update_feed_youtube_title_date_extracted(self, tmp_path):
+        """title_date is also extracted for YouTube items."""
+        youtube_items = [
+            {
+                "id": "youtube-abc",
+                "title": "2021 July vlog",
+                "link": "https://youtu.be/abc",
+                "updated": "2021-07-10 00:00:00",
+                "thumb": "https://i.ytimg.com/vi/abc/mqdefault.jpg",
+            }
+        ]
+        feed_file = str(tmp_path / "feed.json")
+
+        with mock.patch("update.FEED_FILE", feed_file):
+            with self._patch_loaders(flickr_items=[], youtube_items=youtube_items):
+                from update import update_feed
+                update_feed()
+
+        with open(feed_file) as f:
+            data = json.load(f)
+
+        assert data["youtube-abc"]["title_date"] == "2021-07"

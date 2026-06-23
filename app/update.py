@@ -2,6 +2,7 @@
 """Update routines."""
 
 from datasources import loaders
+from dates import extract_title_date
 import json
 import os
 
@@ -20,6 +21,8 @@ def update_feed():
     for loader in loaders:
         current = loader()
         for item in current:
+            # Extract title_date from raw title BEFORE sanitization
+            item["title_date"] = extract_title_date(item.get("title", ""))
             item["title"] = item["title"].replace(".", " ").replace("_", " ")
             feed[item["id"]] = item
 

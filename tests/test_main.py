@@ -351,3 +351,139 @@ class TestJsonpResponse:
 
         jsonp_response(mock_request, mock_response, {})
         assert mock_response.content_type == "application/javascript"
+
+
+# ── year_month derivation tests ───────────────────────────────────────────────
+
+class TestYearMonthDerivation:
+    """Tests for year_month field computed by _load_feed()."""
+
+    def _write_feed(self, feed_file, items_by_id):
+        with open(feed_file, "w") as f:
+            json.dump(items_by_id, f)
+
+    def test_year_month_present_in_each_item(self, tmp_path):
+        """Every item returned by _load_feed() has a 'year_month' key."""
+        feed_file = str(tmp_path / "feed.json")
+        self._write_feed(feed_file, {
+            "flickr-001": {
+                "id": "flickr-001", "title": "Album",
+                "link": "https://f.com/1", "updated": "2021-06-01 00:00:00",
+                "thumb": "https://f.com/1.jpg",
+            }
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        assert "year_month" in items[0]
+
+    def test_year_month_from_title_date(self, tmp_path):
+        """year_month uses title_date when present."""
+        feed_file = str(tmp_path / "feed.json")
+        self._write_feed(feed_file, {
+            "flickr-001": {
+                "id": "flickr-001", "title": "2022 August holiday",
+                "link": "https://f.com/1", "updated": "2021-06-01 00:00:00",
+                "thumb": "https://f.com/1.jpg",
+                "title_date": "2022-08",
+                "median_taken_date": "2020-01-01 00:00:00",
+            }
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        assert items[0]["year_month"] == "2022-08"
+
+    def test_year_month_from_median_taken_when_no_title_date(self, tmp_path):
+        """year_month uses median_taken_date when title_date is absent."""
+        feed_file = str(tmp_path / "feed.json")
+        self._write_feed(feed_file, {
+            "flickr-001": {
+                "id": "flickr-001", "title": "Plain Album",
+                "link": "https://f.com/1", "updated": "2019-01-01 00:00:00",
+                "thumb": "https://f.com/1.jpg",
+                "title_date": None,
+                "median_taken_date": "2021-07-15 12:00:00",
+            }
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        assert items[0]["year_month"] == "2021-07"
+
+    def test_year_month_from_updated_when_no_title_or_median(self, tmp_path):
+        """year_month falls back to updated when title_date and median_taken_date are absent."""
+        feed_file = str(tmp_path / "feed.json")
+        self._write_feed(feed_file, {
+            "youtube-001": {
+                "id": "youtube-001", "title": "A video",
+                "link": "https://youtu.be/001", "updated": "2023-09-05 08:00:00",
+                "thumb": "https://ytimg.com/1.jpg",
+                # no title_date, no median_taken_date
+            }
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        assert items[0]["year_month"] == "2023-09"
+
+    def test_year_month_none_median_falls_back_to_updated(self, tmp_path):
+        """Explicit None for median_taken_date correctly falls back to updated."""
+        feed_file = str(tmp_path / "feed.json")
+        self._write_feed(feed_file, {
+            "flickr-001": {
+                "id": "flickr-001", "title": "Album",
+                "link": "https://f.com/1", "updated": "2022-03-01 00:00:00",
+                "thumb": "https://f.com/1.jpg",
+                "title_date": None,
+                "median_taken_date": None,
+            }
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        assert items[0]["year_month"] == "2022-03"
+
+    def test_feed_sorted_by_year_month_descending(self, tmp_path):
+        """Items are sorted by year_month descending (title_date used when present)."""
+        feed_file = str(tmp_path / "feed.json")
+        # title_date "2023-08" > updated "2022-01" > updated "2020-06"
+        self._write_feed(feed_file, {
+            "flickr-old": {
+                "id": "flickr-old", "title": "Old album",
+                "link": "https://f.com/old", "updated": "2020-06-01 00:00:00",
+                "thumb": "https://f.com/old.jpg",
+                "title_date": None, "median_taken_date": None,
+            },
+            "youtube-mid": {
+                "id": "youtube-mid", "title": "Mid video",
+                "link": "https://youtu.be/mid", "updated": "2022-01-01 00:00:00",
+                "thumb": "https://ytimg.com/mid.jpg",
+            },
+            "flickr-future": {
+                "id": "flickr-future", "title": "Future album",
+                "link": "https://f.com/future", "updated": "2018-01-01 00:00:00",
+                "thumb": "https://f.com/future.jpg",
+                "title_date": "2023-08",  # overrides updated
+                "median_taken_date": None,
+            },
+        })
+
+        with mock.patch("main.FEED_FILE", feed_file):
+            from main import _load_feed
+            items = _load_feed()
+
+        ids = [item["id"] for item in items]
+        assert ids[0] == "flickr-future"   # year_month "2023-08"
+        assert ids[1] == "youtube-mid"     # year_month "2022-01"
+        assert ids[2] == "flickr-old"      # year_month "2020-06"

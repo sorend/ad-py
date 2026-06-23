@@ -10,6 +10,7 @@ from healthcheck import HealthCheck, EnvironmentDump
 import bottle
 from bottle import request, response, static_file
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from dates import compute_year_month
 
 app = application = bottle.Bottle()
 
@@ -71,9 +72,15 @@ def _load_feed(limit=32):
     else:
         feed = []
 
-    feed = list(reversed(sorted(feed, key=lambda x: x["updated"])))[:limit]
+    feed = list(reversed(sorted(feed, key=lambda x: (
+        compute_year_month(x.get("title_date"), x.get("median_taken_date"), x["updated"]),
+        x["updated"],
+    ))))[:limit]
     for item in feed:
         item["type"] = "picture" if item["id"].startswith("flickr-") else "video"
+        item["year_month"] = compute_year_month(
+            item.get("title_date"), item.get("median_taken_date"), item["updated"]
+        )
     return feed
 
 

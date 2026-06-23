@@ -39,18 +39,54 @@ def load_flickr():
 
         return json.load(urllib.request.urlopen(url))
 
+    def get_median_taken_date(photoset_id):
+        """Return median datetaken string for photos in a photoset, or None."""
+        taken_dates = []
+        page = 1
+        while True:
+            resp = flickr_call(
+                'flickr.photosets.getPhotos',
+                photoset_id=photoset_id,
+                extras='datetaken,datetakenunknown',
+                per_page=500,
+                page=page,
+            )
+            photos = resp["photoset"]["photo"]
+            for p in photos:
+                if str(p.get("datetakenunknown", "0")) == "0" and p.get("datetaken"):
+                    taken_dates.append(p["datetaken"])
+            pages = int(resp["photoset"]["pages"])
+            if page >= pages:
+                break
+            page += 1
+
+        if not taken_dates:
+            return None
+
+        taken_dates.sort()
+        mid = len(taken_dates) // 2
+        if len(taken_dates) % 2 == 1:
+            return taken_dates[mid]
+        # Even count: average the two middle timestamps
+        dt1 = datetime.datetime.strptime(taken_dates[mid - 1], "%Y-%m-%d %H:%M:%S")
+        dt2 = datetime.datetime.strptime(taken_dates[mid], "%Y-%m-%d %H:%M:%S")
+        avg = dt1 + (dt2 - dt1) / 2
+        return avg.strftime("%Y-%m-%d %H:%M:%S")
+
     def extract(e):
         psid, prid, farm, server, secret = e["id"], e["primary"], e["farm"], e["server"], e["secret"]
         link = 'https://www.flickr.com/photos/sorend/sets/%s/' % psid
         thumb = 'https://farm%s.static.flickr.com/%s/%s_%s_m.jpg' % (farm, server, prid, secret)
         updated = str(datetime.datetime.fromtimestamp(int(e["date_update"])))
+        median_taken_date = get_median_taken_date(psid)
 
         return {
             "id": "flickr-%s" % (psid,),
             "title": e["title"]["_content"],
             "link": link,
             "updated": updated,
-            "thumb": thumb
+            "thumb": thumb,
+            "median_taken_date": median_taken_date,
         }
 
     logging.info("getting flickr photosets")
