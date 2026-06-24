@@ -3,24 +3,22 @@
 {% block title %}Atmakuri Davidsen Family{% endblock %}
 
 {% block content %}
-  <div id="overlay">
-    <img src="/static/family.png" alt="Family">
-    <div class="content">
-      <h1>Atmakuri Davidsen<br>family web-site</h1>
-      <a href="https://www.flickr.com/photos/sorend">All albums</a>
-      <a href="https://www.youtube.com/channel/UCPA_5p59ljYI6mBDHpwpqcA">All videos</a>
-      <a href="https://www.vimeo.com/sorend/videos">(Older videos)</a>
-    </div>
-  </div>
   <div id="feed"
        hx-get="/feed.html"
        hx-trigger="load"
        hx-indicator="#loading">
-    <span id="loading">Loading ...</span>
+    <div id="loading">Loading&hellip;</div>
   </div>
-  <div style="clear:both;"></div>
-  <div id="links"></div>
-  <p style="text-align: right; color:#999;">
-    Copyright &copy; 2010-2026 Atmakuri Davidsen
-  </p>
+
+  <div id="info">
+    <img src="/static/family.png" alt="Family">
+    <h1>Atmakuri Davidsen<br>family web-site</h1>
+    <nav>
+      <a href="https://www.flickr.com/photos/sorend" target="_blank" rel="noopener noreferrer">All albums</a>
+      <a href="https://www.youtube.com/channel/UCPA_5p59ljYI6mBDHpwpqcA" target="_blank" rel="noopener noreferrer">All videos</a>
+      <a href="https://www.vimeo.com/sorend/videos" target="_blank" rel="noopener noreferrer">Older videos</a>
+    </nav>
+  </div>
+
+  <p class="copyright">Copyright &copy; 2010-2026 Atmakuri Davidsen</p>
 {% endblock %}

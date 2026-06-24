@@ -1,10 +1,10 @@
 {% for item in items %}
-<div class="fi">
-  <a href="{{ item.link }}">
-    <div class="{{ item.type }}" style="background-image: url({{ item.thumb }})"></div>
-    <h3><span>{{ item.title }}</span></h3>
-  </a>
+<div class="photo" data-href="{{ item.link }}">
+  <div class="photo-image {{ item.type }}" style="background-image: url({{ item.thumb }})">
+    <span class="photo-date">{{ item.year_month[:4] }} / {{ item.year_month[5:] }}</span>
+  </div>
+  <div class="photo-caption">{{ item.title }}</div>
 </div>
 {% else %}
-<p style="padding:1em;">No items available yet.</p>
+<div id="loading">No items available yet.</div>
 {% endfor %}
