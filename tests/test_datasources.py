@@ -180,7 +180,7 @@ class TestLoadFlickr:
         all_urls = [c[0][0] for c in mock_urlopen.call_args_list]
         getphotos_urls = [u for u in all_urls if "flickr.photosets.getPhotos" in u]
         for url in getphotos_urls:
-            assert "datetaken" in url
+            assert "date_taken" in url
 
 
 class TestLoadFlickrMedianTakenDate:

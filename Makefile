@@ -1,4 +1,10 @@
-.PHONY: install test lint run docker-build docker-run clean
+.PHONY: install test lint run docker-build docker-run clean version
+
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+
+# Show computed version
+version:
+	@echo $(VERSION)
 
 # Install all dependencies including dev
 install:
@@ -18,7 +24,7 @@ run:
 
 # Build Docker image
 docker-build:
-	docker build -t ad-py:local .
+	docker build -t ad-py:$(VERSION) .
 
 # Run Docker container locally (requires env vars)
 docker-run: docker-build
@@ -28,7 +34,7 @@ docker-run: docker-build
 	  -e YOUTUBE_DEVELOPER_KEY \
 	  -e YOUTUBE_CHANNEL \
 	  -p 8080:8080 \
-	  ad-py:local
+	  ad-py:$(VERSION)
 
 # Remove build artifacts and venv
 clean:

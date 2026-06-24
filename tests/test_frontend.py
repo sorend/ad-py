@@ -145,7 +145,7 @@ class TestFeedHtmlEndpoint:
         with mock.patch("main.FEED_FILE", feed_file):
             _, body = call_route(main.app, "/feed.html")
 
-        assert body.count('class="fi"') == 2
+        assert body.count('class="photo"') == 2
         assert "Nice Album" in body
         assert "Cool Video" in body
 
@@ -167,7 +167,7 @@ class TestFeedHtmlEndpoint:
         with mock.patch("main.FEED_FILE", feed_file):
             _, body = call_route(main.app, "/feed.html")
 
-        assert 'class="picture"' in body
+        assert 'photo-image picture' in body
 
     def test_feed_html_youtube_item_has_video_class(self, tmp_path):
         """GET /feed.html gives youtube items a 'video' CSS class."""
@@ -187,7 +187,7 @@ class TestFeedHtmlEndpoint:
         with mock.patch("main.FEED_FILE", feed_file):
             _, body = call_route(main.app, "/feed.html")
 
-        assert 'class="video"' in body
+        assert 'photo-image video' in body
 
     def test_feed_html_limits_to_32_items(self, tmp_path):
         """GET /feed.html renders at most 32 items."""
@@ -208,7 +208,7 @@ class TestFeedHtmlEndpoint:
         with mock.patch("main.FEED_FILE", feed_file):
             _, body = call_route(main.app, "/feed.html")
 
-        assert body.count('class="fi"') == 32
+        assert body.count('class="photo"') == 32
 
     def test_feed_html_no_jquery_or_handlebars(self, tmp_path):
         """GET /feed.html does not include jQuery or Handlebars (legacy deps removed)."""
