@@ -51,10 +51,10 @@
       photo.style.top       = cy + 'px';
       photo.style.opacity   = '0';
       photo.style.transform = 'rotate(0deg) scale(0.35)';
-      photo.style.zIndex    = String(i + 1);
+      photo.style.zIndex    = String(photos.length - i);
 
-      /* Staggered throw animation */
-      var delay = i * 55 + 60;
+      /* Staggered throw animation – oldest thrown first, newest lands on top */
+      var delay = (photos.length - 1 - i) * 55 + 60;
       setTimeout(function () {
         photo.style.transition =
           'left 0.45s cubic-bezier(0.22, 1.18, 0.36, 1),' +
