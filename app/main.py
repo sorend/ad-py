@@ -2,6 +2,7 @@
 """Main entry for Bottle application."""
 
 import json
+import logging
 import os
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -150,6 +151,10 @@ def _start_scheduler():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
     _start_scheduler()
     from update import update_feed
     update_feed()

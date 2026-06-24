@@ -31,7 +31,7 @@ def load_flickr():
     """Load from flickr."""
 
     def flickr_call(method, **kw):
-        extra = '&'.join(map(lambda t: "%s=%s" % (str(t[0]), urllib.parse.quote_plus(str(t[1]))), kw.items()))
+        extra = '&'.join(map(lambda t: "%s=%s" % (str(t[0]), urllib.parse.quote(str(t[1]), safe=',')), kw.items()))
         if len(extra) > 0:
             extra = '&' + extra
         url = 'https://api.flickr.com/services/rest/?api_key=%s&user_id=%s&format=json&nojsoncallback=1&method=%s%s' \
@@ -47,15 +47,16 @@ def load_flickr():
             resp = flickr_call(
                 'flickr.photosets.getPhotos',
                 photoset_id=photoset_id,
-                extras='datetaken,datetakenunknown',
+                extras='date_taken',
                 per_page=500,
                 page=page,
             )
             photos = resp["photoset"]["photo"]
+            pages = int(resp["photoset"]["pages"])
+            logging.info("fetching photos for photoset %s (page %d/%d)", photoset_id, page, pages)
             for p in photos:
                 if str(p.get("datetakenunknown", "0")) == "0" and p.get("datetaken"):
                     taken_dates.append(p["datetaken"])
-            pages = int(resp["photoset"]["pages"])
             if page >= pages:
                 break
             page += 1
@@ -75,6 +76,7 @@ def load_flickr():
 
     def extract(e):
         psid, prid, farm, server, secret = e["id"], e["primary"], e["farm"], e["server"], e["secret"]
+        logging.info("updating photoset: %s (%s)", e["title"]["_content"], psid)
         link = 'https://www.flickr.com/photos/sorend/sets/%s/' % psid
         thumb = 'https://farm%s.static.flickr.com/%s/%s_%s_m.jpg' % (farm, server, prid, secret)
         updated = str(datetime.datetime.fromtimestamp(int(e["date_update"])))

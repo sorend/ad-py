@@ -4,6 +4,7 @@
 from datasources import loaders
 from dates import extract_title_date
 import json
+import logging
 import os
 
 from main import FEED_FILE
@@ -29,4 +30,4 @@ def update_feed():
     with open(FEED_FILE, "w") as fd:
         json.dump(feed, fd, indent=2, sort_keys=True)
 
-    print("updated feed, old items", old, "new items", len(feed))
+    logging.info("updated feed, old items %d new items %d", old, len(feed))
