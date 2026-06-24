@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ad-py"
+version = "0.1.0"
+description = "Python backend for atmakuridavidsen.com - aggregates Flickr and YouTube media feeds"
+requires-python = ">=3.12"
+dependencies = [
+    "APScheduler>=3.10",
+    "google-api-python-client>=2.0",
+    "bottle>=0.12",
+    "jinja2>=3.1",
+    "python-dateutil>=2.9",
+    "waitress>=3.0",
+    "py-healthcheck>=1.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-mock>=3.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["app"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

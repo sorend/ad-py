@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Atmakuri Davidsen Family{% endblock %}
+
+{% block content %}
+  <div id="feed"
+       hx-get="/feed.html"
+       hx-trigger="load"
+       hx-indicator="#loading">
+    <div id="loading">Loading&hellip;</div>
+  </div>
+
+  <div id="info">
+    <img src="/static/family.png" alt="Family">
+    <h1>Atmakuri Davidsen<br>family web-site</h1>
+    <nav>
+      <a href="https://www.flickr.com/photos/sorend" target="_blank" rel="noopener noreferrer">All albums</a>
+      <a href="https://www.youtube.com/channel/UCPA_5p59ljYI6mBDHpwpqcA" target="_blank" rel="noopener noreferrer">All videos</a>
+      <a href="https://www.vimeo.com/sorend/videos" target="_blank" rel="noopener noreferrer">Older videos</a>
+    </nav>
+  </div>
+
+  <p class="copyright">Copyright &copy; 2010-2026 Atmakuri Davidsen</p>
+{% endblock %}

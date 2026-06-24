@@ -1,0 +1,208 @@
+/* ── Variables ──────────────────────────────────────────────────────────── */
+:root {
+  --table-bg:           #1f1309;
+  --photo-bg:           #f5f1ea;
+  --photo-shadow:       3px 5px 16px rgba(0, 0, 0, 0.65);
+  --photo-shadow-hover: 6px 10px 26px rgba(0, 0, 0, 0.8);
+  --photo-shadow-drag:  10px 16px 36px rgba(0, 0, 0, 0.92);
+  --photo-width:        220px;
+  --photo-img-h:        190px;
+  --font-hand:          'Caveat', cursive;
+  --info-bg:            rgba(255, 246, 176, 0.93);
+  --text-dark:          #2a1a0a;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Table surface ──────────────────────────────────────────────────────── */
+body {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--table-bg);
+  /* subtle wood-grain texture via layered gradients */
+  background-image:
+    repeating-linear-gradient(
+      -55deg,
+      transparent,
+      transparent 28px,
+      rgba(255, 255, 255, 0.018) 28px,
+      rgba(255, 255, 255, 0.018) 29px
+    ),
+    repeating-linear-gradient(
+      -50deg,
+      transparent,
+      transparent 45px,
+      rgba(0, 0, 0, 0.04) 45px,
+      rgba(0, 0, 0, 0.04) 46px
+    );
+}
+
+/* ── Feed container – fills the viewport, anchors absolute photos ───────── */
+#feed {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+}
+
+/* ── Loading message ────────────────────────────────────────────────────── */
+#loading {
+  font-family: var(--font-hand);
+  font-size: 1.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  letter-spacing: 0.03em;
+}
+
+/* ── Photo card (polaroid style) ────────────────────────────────────────── */
+.photo {
+  position: absolute;
+  width: var(--photo-width);
+  background-color: var(--photo-bg);
+  /* top + sides padding + generous bottom for caption */
+  padding: 10px 10px 50px;
+  box-shadow: var(--photo-shadow);
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform, left, top;
+  transition: box-shadow 0.2s ease;
+}
+
+.photo:hover {
+  box-shadow: var(--photo-shadow-hover);
+}
+
+.photo.is-dragging {
+  cursor: grabbing;
+  box-shadow: var(--photo-shadow-drag);
+  transition: none;
+}
+
+/* ── Image area ─────────────────────────────────────────────────────────── */
+.photo-image {
+  width: 200px;
+  height: var(--photo-img-h);
+  background-size: cover;
+  background-position: center center;
+  position: relative;
+  display: block;
+  /* very slight inner vignette */
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.18);
+}
+
+/* video: play-button badge bottom-left */
+.photo-image.video::after {
+  content: '▶';
+  position: absolute;
+  bottom: 7px;
+  left: 7px;
+  font-size: 12px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.52);
+  padding: 2px 8px 2px 6px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ── Date stamp – top-right of the image ───────────────────────────────── */
+.photo-date {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  font-family: var(--font-hand);
+  font-size: 0.88rem;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 1);
+  /* faint backing so it reads on any photo colour */
+  background: rgba(0, 0, 0, 0.25);
+  padding: 1px 6px;
+  border-radius: 2px;
+  pointer-events: none;
+  letter-spacing: 0.04em;
+}
+
+/* ── Caption – "scribbled" below the image ──────────────────────────────── */
+.photo-caption {
+  font-family: var(--font-hand);
+  font-size: 1.05rem;
+  line-height: 1.25;
+  color: var(--text-dark);
+  text-align: center;
+  padding: 8px 4px 0;
+  /* fixed height keeps all cards the same size */
+  height: 40px;
+  overflow: hidden;
+}
+
+/* ── Info panel – sticky-note style, bottom-right ──────────────────────── */
+#info {
+  position: fixed;
+  bottom: 22px;
+  right: 22px;
+  z-index: 9999;
+  width: 188px;
+  background: var(--info-bg);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  padding: 14px 16px 13px;
+  box-shadow: 3px 4px 14px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  /* slight tilt for the "note on the table" feel */
+  transform: rotate(-1.8deg);
+  border-radius: 1px;
+}
+
+#info img {
+  display: block;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.10);
+  margin: 0 auto 9px;
+  object-fit: cover;
+}
+
+#info h1 {
+  font-family: var(--font-hand);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #3a2010;
+  margin-bottom: 10px;
+}
+
+#info nav a {
+  display: block;
+  font-family: var(--font-hand);
+  font-size: 0.95rem;
+  color: #5a3820;
+  text-decoration: none;
+  padding: 2px 0;
+}
+
+#info nav a:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+/* ── Copyright ──────────────────────────────────────────────────────────── */
+.copyright {
+  position: fixed;
+  bottom: 8px;
+  left: 14px;
+  font-family: var(--font-hand);
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  letter-spacing: 0.02em;
+}

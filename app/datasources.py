@@ -31,7 +31,7 @@ def load_flickr():
     """Load from flickr."""
 
     def flickr_call(method, **kw):
-        extra = '&'.join(map(lambda t: "%s=%s" % (str(t[0]), urllib.parse.quote_plus(str(t[1]))), kw.items()))
+        extra = '&'.join(map(lambda t: "%s=%s" % (str(t[0]), urllib.parse.quote(str(t[1]), safe=',')), kw.items()))
         if len(extra) > 0:
             extra = '&' + extra
         url = 'https://api.flickr.com/services/rest/?api_key=%s&user_id=%s&format=json&nojsoncallback=1&method=%s%s' \
@@ -39,18 +39,56 @@ def load_flickr():
 
         return json.load(urllib.request.urlopen(url))
 
+    def get_median_taken_date(photoset_id):
+        """Return median datetaken string for photos in a photoset, or None."""
+        taken_dates = []
+        page = 1
+        while True:
+            resp = flickr_call(
+                'flickr.photosets.getPhotos',
+                photoset_id=photoset_id,
+                extras='date_taken',
+                per_page=500,
+                page=page,
+            )
+            photos = resp["photoset"]["photo"]
+            pages = int(resp["photoset"]["pages"])
+            logging.info("fetching photos for photoset %s (page %d/%d)", photoset_id, page, pages)
+            for p in photos:
+                if str(p.get("datetakenunknown", "0")) == "0" and p.get("datetaken"):
+                    taken_dates.append(p["datetaken"])
+            if page >= pages:
+                break
+            page += 1
+
+        if not taken_dates:
+            return None
+
+        taken_dates.sort()
+        mid = len(taken_dates) // 2
+        if len(taken_dates) % 2 == 1:
+            return taken_dates[mid]
+        # Even count: average the two middle timestamps
+        dt1 = datetime.datetime.strptime(taken_dates[mid - 1], "%Y-%m-%d %H:%M:%S")
+        dt2 = datetime.datetime.strptime(taken_dates[mid], "%Y-%m-%d %H:%M:%S")
+        avg = dt1 + (dt2 - dt1) / 2
+        return avg.strftime("%Y-%m-%d %H:%M:%S")
+
     def extract(e):
         psid, prid, farm, server, secret = e["id"], e["primary"], e["farm"], e["server"], e["secret"]
+        logging.info("updating photoset: %s (%s)", e["title"]["_content"], psid)
         link = 'https://www.flickr.com/photos/sorend/sets/%s/' % psid
         thumb = 'https://farm%s.static.flickr.com/%s/%s_%s_m.jpg' % (farm, server, prid, secret)
         updated = str(datetime.datetime.fromtimestamp(int(e["date_update"])))
+        median_taken_date = get_median_taken_date(psid)
 
         return {
             "id": "flickr-%s" % (psid,),
             "title": e["title"]["_content"],
             "link": link,
             "updated": updated,
-            "thumb": thumb
+            "thumb": thumb,
+            "median_taken_date": median_taken_date,
         }
 
     logging.info("getting flickr photosets")
