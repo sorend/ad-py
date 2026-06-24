@@ -156,7 +156,12 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
     _start_scheduler()
-    from update import update_feed
-    update_feed()
+    # Only fetch on startup when there is no cached feed yet.
+    # Set FORCE_UPDATE=1 to override and always refresh on start.
+    if not os.path.exists(FEED_FILE) or os.environ.get("FORCE_UPDATE"):
+        from update import update_feed
+        update_feed()
+    else:
+        logging.info("Feed cache found at %s, skipping initial update", FEED_FILE)
     from waitress import serve
     serve(app, listen="*:8080")
