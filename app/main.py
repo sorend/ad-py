@@ -64,8 +64,12 @@ FEED_FILE = os.environ['FEED_FILE']
 print("- Using feed file", FEED_FILE)
 
 
-def _load_feed(limit=32):
-    """Load, sort and truncate the feed from disk."""
+def _load_feed(page=1, page_size=32):
+    """Load, sort and paginate the feed from disk.
+
+    Returns a (items, has_more) tuple where has_more indicates whether
+    a subsequent page exists.
+    """
     if os.path.exists(FEED_FILE):
         with open(FEED_FILE) as fd:
             feed = json.load(fd)
@@ -76,13 +80,18 @@ def _load_feed(limit=32):
     feed = list(reversed(sorted(feed, key=lambda x: (
         compute_year_month(x.get("title_date"), x.get("median_taken_date"), x["updated"]),
         x["updated"],
-    ))))[:limit]
-    for item in feed:
+    ))))
+
+    offset = (page - 1) * page_size
+    has_more = (offset + page_size) < len(feed)
+    items = feed[offset:offset + page_size]
+
+    for item in items:
         item["type"] = "picture" if item["id"].startswith("flickr-") else "video"
         item["year_month"] = compute_year_month(
             item.get("title_date"), item.get("median_taken_date"), item["updated"]
         )
-    return feed
+    return items, has_more
 
 
 def jsonp_response(request, response, dictionary):
@@ -103,8 +112,8 @@ def feed_reset():
 @app.route('/feed.x')
 def feed():
     """Retrieve the feed as JSON (or JSONP when ?callback= is given)."""
-    sfeed = _load_feed()
-    return jsonp_response(request, response, {"data": sfeed, "success": True})
+    items, _ = _load_feed()
+    return jsonp_response(request, response, {"data": items, "success": True})
 
 
 # ── frontend routes ────────────────────────────────────────────────────────────
@@ -118,7 +127,9 @@ def index():
 @app.route('/feed.html')
 def feed_html():
     """Return an htmx-compatible HTML fragment of feed items."""
-    return render('_feed_items.html', items=_load_feed())
+    page = int(request.query.get('page', 1))
+    items, has_more = _load_feed(page=page)
+    return render('_feed_items.html', items=items, has_more=has_more, next_page=page + 1)
 
 
 @app.error(404)

@@ -375,7 +375,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         assert "year_month" in items[0]
 
@@ -394,7 +394,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         assert items[0]["year_month"] == "2022-08"
 
@@ -413,7 +413,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         assert items[0]["year_month"] == "2021-07"
 
@@ -431,7 +431,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         assert items[0]["year_month"] == "2023-09"
 
@@ -450,7 +450,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         assert items[0]["year_month"] == "2022-03"
 
@@ -481,7 +481,7 @@ class TestYearMonthDerivation:
 
         with mock.patch("main.FEED_FILE", feed_file):
             from main import _load_feed
-            items = _load_feed()
+            items, _ = _load_feed()
 
         ids = [item["id"] for item in items]
         assert ids[0] == "flickr-future"   # year_month "2023-08"

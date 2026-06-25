@@ -22,8 +22,12 @@
     var feed = document.getElementById('feed');
     if (!feed) return;
 
-    var photos = Array.prototype.slice.call(feed.querySelectorAll('.photo'));
+    /* Only scatter cards that have not been positioned yet */
+    var photos = Array.prototype.slice.call(feed.querySelectorAll('.photo:not(.scattered)'));
     if (!photos.length) return;
+
+    /* Mark immediately so a second call before animation ends won't re-scatter */
+    photos.forEach(function (photo) { photo.classList.add('scattered'); });
 
     var W  = window.innerWidth;
     var H  = window.innerHeight;
@@ -33,6 +37,10 @@
     /* Info-panel exclusion zone (bottom-right, roughly 210×230 px) */
     var excX = W  - 232;
     var excY = H  - 252;
+
+    /* Reserve a z-index band above all already-scattered photos */
+    var startZ = maxZ + photos.length;
+    maxZ = startZ;
 
     photos.forEach(function (photo, i) {
       /* Pick a random final position, avoiding the info-panel corner */
@@ -51,7 +59,8 @@
       photo.style.top       = cy + 'px';
       photo.style.opacity   = '0';
       photo.style.transform = 'rotate(0deg) scale(0.35)';
-      photo.style.zIndex    = String(photos.length - i);
+      /* Newest of this batch lands on top; use the reserved band */
+      photo.style.zIndex    = String(startZ - i);
 
       /* Staggered throw animation – oldest thrown first, newest lands on top */
       var delay = (photos.length - 1 - i) * 55 + 60;

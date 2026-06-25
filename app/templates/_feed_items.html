@@ -8,3 +8,4 @@
 {% else %}
 <div id="loading">No items available yet.</div>
 {% endfor %}
+<div id="more-btn" hx-swap-oob="true">{% if has_more %}<button hx-get="/feed.html?page={{ next_page }}" hx-target="#feed" hx-swap="beforeend">More</button>{% endif %}</div>
