@@ -15,6 +15,8 @@ RUN uv sync --no-dev --no-install-project && \
 
 COPY ./app /app
 
+RUN chown -R www-data:www-data /app
+
 USER www-data
 
 ENTRYPOINT ["/sbin/tini", "--"]
