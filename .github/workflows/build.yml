@@ -81,3 +81,4 @@ jobs:
         tags: ${{ steps.docker_meta.outputs.tags }}
         labels: ${{ steps.docker_meta.outputs.labels }}
         file: Dockerfile
+        build-args: APP_VERSION=${{ steps.git-version.outputs.version }}

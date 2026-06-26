@@ -15,6 +15,9 @@ RUN uv sync --no-dev --no-install-project && \
 
 COPY ./app /app
 
+ARG APP_VERSION=dev
+ENV APP_VERSION=${APP_VERSION}
+
 RUN chown -R www-data:www-data /app
 
 USER www-data

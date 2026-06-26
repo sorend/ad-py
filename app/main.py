@@ -23,10 +23,15 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(_HERE, "static")
 TEMPLATE_DIR = os.path.join(_HERE, "templates")
 
+# Version injected at Docker build time; changes on every deployment.
+APP_VERSION = os.environ.get("APP_VERSION", "dev")
+
 _jinja_env = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR),
     autoescape=select_autoescape(["html"]),
 )
+# Make version available to all templates (used for static asset cache-busting).
+_jinja_env.globals["app_version"] = APP_VERSION
 
 
 def render(template_name, **ctx):
@@ -34,12 +39,42 @@ def render(template_name, **ctx):
     return _jinja_env.get_template(template_name).render(**ctx)
 
 
+def _feed_etag():
+    """Return an ETag token that changes on new deploy OR when the feed updates."""
+    if os.path.exists(FEED_FILE):
+        mtime = int(os.path.getmtime(FEED_FILE))
+        return f"{APP_VERSION}-{mtime}"
+    return f"{APP_VERSION}-empty"
+
+
+def _apply_etag(etag_value, cache_control="no-cache"):
+    """Set ETag/Cache-Control response headers.
+
+    If the client already holds the current version (If-None-Match matches),
+    raise a 304 Not Modified so Cloudflare and browsers skip the body.
+    """
+    full_etag = f'"{etag_value}"'
+    response.set_header("Cache-Control", cache_control)
+    response.set_header("ETag", full_etag)
+    if request.environ.get("HTTP_IF_NONE_MATCH") == full_etag:
+        raise bottle.HTTPResponse(
+            status=304,
+            headers={"Cache-Control": cache_control, "ETag": full_etag},
+        )
+
+
 # ── static assets ──────────────────────────────────────────────────────────────
 
 @app.route("/static/<filepath:path>")
 def serve_static(filepath):
-    """Serve static files from app/static/."""
-    return static_file(filepath, root=STATIC_DIR)
+    """Serve static files from app/static/.
+
+    Long-lived cache is safe because templates append ?v=<APP_VERSION> to
+    every static URL, so a new deployment naturally busts Cloudflare's cache.
+    """
+    result = static_file(filepath, root=STATIC_DIR)
+    result.set_header("Cache-Control", "public, max-age=31536000, immutable")
+    return result
 
 
 # ── health / environment ───────────────────────────────────────────────────────
@@ -112,6 +147,7 @@ def feed_reset():
 @app.route('/feed.x')
 def feed():
     """Retrieve the feed as JSON (or JSONP when ?callback= is given)."""
+    _apply_etag(_feed_etag())
     items, _ = _load_feed()
     return jsonp_response(request, response, {"data": items, "success": True})
 
@@ -121,6 +157,7 @@ def feed():
 @app.route('/')
 def index():
     """Serve the main page."""
+    _apply_etag(APP_VERSION)
     return render('index.html')
 
 
@@ -128,6 +165,7 @@ def index():
 def feed_html():
     """Return an htmx-compatible HTML fragment of feed items."""
     page = int(request.query.get('page', 1))
+    _apply_etag(f"{_feed_etag()}-p{page}")
     items, has_more = _load_feed(page=page)
     return render('_feed_items.html', items=items, has_more=has_more, next_page=page + 1)
 
